@@ -4,6 +4,9 @@
 #include <time.h>
 #include <cstdlib>
 #include <papi.h>
+#include <omp.h>
+#include <ctime>
+#include <fstream>
 
 using namespace std;
 

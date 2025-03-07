@@ -127,6 +127,86 @@ void OnMultLine(int m_ar, int m_br)
     free(phc);
 }
 
+void OnMultLine_OMP1(int m_ar, int m_br)
+{
+    double *pha, *phb, *phc;
+    pha = (double *)malloc((m_ar * m_ar) * sizeof(double));
+    phb = (double *)malloc((m_ar * m_ar) * sizeof(double));
+    phc = (double *)malloc((m_ar * m_ar) * sizeof(double));
+
+    // Initialize matrices
+    for (int i = 0; i < m_ar; i++)
+        for (int j = 0; j < m_ar; j++)
+            pha[i * m_ar + j] = 1.0;
+
+    for (int i = 0; i < m_br; i++)
+        for (int j = 0; j < m_br; j++)
+            phb[i * m_br + j] = i + 1;
+
+    double start = omp_get_wtime(); // Start timing
+
+    // Parallelized version
+    #pragma omp parallel for
+    for (int i = 0; i < m_ar; i++) {
+        for (int k = 0; k < m_ar; k++) {
+            double temp = pha[i * m_ar + k]; // Store row element A[i][k]
+            for (int j = 0; j < m_br; j++) {
+                phc[i * m_ar + j] += temp * phb[k * m_br + j];
+            }
+        }
+    }
+
+    double end = omp_get_wtime(); // End timing
+
+    printf("Execution Time (OMP1): %f seconds\n", end - start);
+
+    free(pha);
+    free(phb);
+    free(phc);
+}
+
+void OnMultLine_OMP2(int m_ar, int m_br)
+{
+    double *pha, *phb, *phc;
+    pha = (double *)malloc((m_ar * m_ar) * sizeof(double));
+    phb = (double *)malloc((m_ar * m_ar) * sizeof(double));
+    phc = (double *)malloc((m_ar * m_ar) * sizeof(double));
+
+    // Initialize matrices
+    for (int i = 0; i < m_ar; i++)
+        for (int j = 0; j < m_ar; j++)
+            pha[i * m_ar + j] = 1.0;
+
+    for (int i = 0; i < m_br; i++)
+        for (int j = 0; j < m_br; j++)
+            phb[i * m_br + j] = i + 1;
+
+    double start = omp_get_wtime(); // Start timing
+
+    #pragma omp parallel
+    {
+        for (int i = 0; i < m_ar; i++) {
+            for (int k = 0; k < m_ar; k++) {
+                double temp = pha[i * m_ar + k]; // Store row element A[i][k]
+
+                #pragma omp for
+                for (int j = 0; j < m_br; j++) {
+                    phc[i * m_ar + j] += temp * phb[k * m_br + j];
+                }
+            }
+        }
+    }
+
+    double end = omp_get_wtime(); // End timing
+
+    printf("Execution Time (OMP2): %f seconds\n", end - start);
+
+    free(pha);
+    free(phb);
+    free(phc);
+}
+
+
 // add code here for block x block matriz multiplication
 void OnMultBlock(int m_ar, int m_br, int bkSize)
 {

@@ -218,6 +218,29 @@ void OnMultBlock(int m_ar, int m_br, int bkSize)
 }
 
 
+void measure_performance(int m_ar, int m_br) {
+    double start_serial, end_serial, start_parallel, end_parallel;
+
+    start_serial = omp_get_wtime();
+    OnMultLine(m_ar, m_br);
+    end_serial = omp_get_wtime();
+    
+    start_parallel = omp_get_wtime();
+    OnMultLine_OMP1(m_ar, m_br);
+    end_parallel = omp_get_wtime();
+
+    double serial_time = end_serial - start_serial;
+    double parallel_time = end_parallel - start_parallel;
+    
+    double speedup = serial_time / parallel_time;
+    int num_threads = omp_get_max_threads();
+    double efficiency = speedup / num_threads;
+
+    printf("Speedup: %f\n", speedup);
+    printf("Efficiency: %f\n", efficiency);
+}
+
+
 
 void handle_error (int retval)
 {

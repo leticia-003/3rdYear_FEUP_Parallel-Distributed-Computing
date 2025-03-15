@@ -45,7 +45,10 @@ def on_mult(m_ar, m_br):
         print("Error resetting event set.\n")
 
 def on_mult_line(m_ar, m_br):
-    #initialization
+    # Array initialization
+    A = np.ones((m_ar, m_ar))  
+    B = np.array([[i + 1 for j in range(m_br)] for i in range(m_br)], dtype=float)
+    C = np.zeros((m_ar, m_br))  
 
     #start counters
     try:
@@ -55,6 +58,12 @@ def on_mult_line(m_ar, m_br):
     
     start_time = time.time()
     #multline
+
+    for i in range(m_ar) :
+        for k in range(m_ar) :
+            temp = A[i, k]
+            for j in range(m_br) :
+                C[i,j] += temp * B[k, j]
 
     #stop counters
     end_time = time.time()

@@ -213,7 +213,78 @@ void OnMultLine_OMP2(int m_ar, int m_br)
 // add code here for block x block matriz multiplication
 void OnMultBlock(int m_ar, int m_br, int bkSize)
 {
+
+    // Variables
+    SYSTEMTIME Time1, Time2;
+
+    double *pha, *phb, *phc;
+    pha = (double *)malloc((m_ar * m_ar) * sizeof(double));
+    phb = (double *)malloc((m_ar * m_ar) * sizeof(double));
+    phc = (double *)malloc((m_ar * m_ar) * sizeof(double));
     
+    char st[100];
+    double temp;
+  
+    // Initialize matriz A with 1s
+    for(int i = 0; i < m_ar; i++)
+        for(int j = 0; j < m_ar; ++j)
+            pha[i*m_ar + j] = (double)1.0;
+    
+    // Initialize matriz B with i+1
+    for(int i = 0; i < m_br; i++)
+        for(int j = 0; j < m_br; ++j)
+            phb[i*m_br + j] = (double)(i+1);
+
+    // Initialize matriz C with 0s
+    for(int i = 0; i < m_ar*m_br; ++i)
+        phc[i] = 0;
+    
+    Time1 = clock();
+
+    int blocksPerRow = m_ar / bkSize;
+
+
+    // blockY ---> Gets the current block row
+    // blockX ---> Gets the current block column
+    for(int blockY = 0; blockY < blocksPerRow; ++blockY){
+        for(int blockX = 0; blockX < blocksPerRow; ++blockX){
+            int blockYindex = blockY * bkSize * m_ar;
+            int blockXindex = blockX * bkSize;
+            int blockIndex = blockYindex + blockXindex;
+
+            // The actual block mutiplication A dot B
+            for(int block = 0; block < blocksPerRow; ++block){
+                int blockAindex = blockYindex + block*bkSize;
+                int blockBindex = block * bkSize * m_ar + blockXindex;
+
+                for(int i = 0; i < bkSize; ++i){
+                    for(int n = 0; n < bkSize; ++n){
+                        for(int j = 0; j < bkSize; ++j){
+                            phc[blockIndex + (i*m_ar+j)] += pha[blockAindex + (i*m_ar+n)] * phb[blockBindex + (n*m_ar+j)];
+                        }
+                    }
+                }
+
+            }
+
+        }
+    }
+
+    Time2 = clock();
+    sprintf(st, "Time: %3.3f seconds\n", (double)(Time2 - Time1) / CLOCKS_PER_SEC);
+    cout << st;
+
+    cout << "Result matrix: " << endl;
+    for(int i = 0; i < 1; ++i){
+    for(int j = 0; j < min(10,m_br); ++j)
+        cout << phc[j] << " ";
+    }
+
+    cout << endl;
+
+    free(pha);
+    free(phb);
+    free(phc);
     
 }
 

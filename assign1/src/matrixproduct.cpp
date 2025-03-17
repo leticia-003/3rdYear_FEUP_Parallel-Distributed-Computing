@@ -55,7 +55,7 @@ void OnMult(int m_ar, int m_br)
 
     double end = omp_get_wtime(); // End timing
 
-    printf("Execution Time (OMP1): %f seconds\n", end - start);
+    printf("Execution Time: %f seconds\n", end - start);
 
 	// display 10 elements of the result matrix tto verify correctness
 	cout << "Result matrix: " << endl;
@@ -109,7 +109,7 @@ void OnMultLine(int m_ar, int m_br)
     // End timing
     double end = omp_get_wtime(); // End timing
 
-    printf("Execution Time (OMP1): %f seconds\n", end - start);
+    printf("Execution Time: %f seconds\n", end - start);
 
     // Display 10 elements of the result matrix to verify correctness
     cout << "Result matrix: " << endl;
@@ -258,7 +258,7 @@ void OnMultBlock(int m_ar, int m_br, int bkSize)
 
     double end = omp_get_wtime(); // End timing
 
-    printf("Execution Time (OMP1): %f seconds\n", end - start);
+    printf("Execution Time: %f seconds\n", end - start);
 
     cout << "Result matrix: " << endl;
     for(int i = 0; i < 1; ++i){

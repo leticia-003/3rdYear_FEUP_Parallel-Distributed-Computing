@@ -17,6 +17,7 @@ void OnMult(int m_ar, int m_br)
 {
 	
 	int i, j, k;
+    double temp;
 
 	double *pha, *phb, *phc;
 	
@@ -75,6 +76,7 @@ void OnMult(int m_ar, int m_br)
 void OnMultLine(int m_ar, int m_br)
 {
     int i, j, k;
+    double temp;
 
     double *pha, *phb, *phc;
 

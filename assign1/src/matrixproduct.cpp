@@ -16,10 +16,6 @@ using namespace std;
 void OnMult(int m_ar, int m_br) 
 {
 	
-	SYSTEMTIME Time1, Time2;
-	
-	char st[100];
-	double temp;
 	int i, j, k;
 
 	double *pha, *phb, *phc;
@@ -42,7 +38,7 @@ void OnMult(int m_ar, int m_br)
 
 
 
-    Time1 = clock();
+    double start = omp_get_wtime();
 
 	for(i=0; i<m_ar; i++)
 	{	for( j=0; j<m_br; j++)
@@ -56,9 +52,9 @@ void OnMult(int m_ar, int m_br)
 	}
 
 
-    Time2 = clock();
-	sprintf(st, "Time: %3.3f seconds\n", (double)(Time2 - Time1) / CLOCKS_PER_SEC);
-	cout << st;
+    double end = omp_get_wtime(); // End timing
+
+    printf("Execution Time (OMP1): %f seconds\n", end - start);
 
 	// display 10 elements of the result matrix tto verify correctness
 	cout << "Result matrix: " << endl;
@@ -78,10 +74,6 @@ void OnMult(int m_ar, int m_br)
 // add code here for line x line matriz multiplication
 void OnMultLine(int m_ar, int m_br)
 {
-	SYSTEMTIME Time1, Time2;
-
-    char st[100];
-    double temp;
     int i, j, k;
 
     double *pha, *phb, *phc;
@@ -100,7 +92,7 @@ void OnMultLine(int m_ar, int m_br)
             phb[i * m_br + j] = (double)(i + 1);
 
     // Start timing
-    Time1 = clock();
+    double start = omp_get_wtime();
 
     // Row-wise multiplication
     for (i = 0; i < m_ar; i++) {
@@ -113,9 +105,9 @@ void OnMultLine(int m_ar, int m_br)
     }
 
     // End timing
-    Time2 = clock();
-    sprintf(st, "Time: %3.3f seconds\n", (double)(Time2 - Time1) / CLOCKS_PER_SEC);
-    cout << st;
+    double end = omp_get_wtime(); // End timing
+
+    printf("Execution Time (OMP1): %f seconds\n", end - start);
 
     // Display 10 elements of the result matrix to verify correctness
     cout << "Result matrix: " << endl;
@@ -214,16 +206,12 @@ void OnMultLine_OMP2(int m_ar, int m_br)
 void OnMultBlock(int m_ar, int m_br, int bkSize)
 {
 
-    // Variables
-    SYSTEMTIME Time1, Time2;
 
     double *pha, *phb, *phc;
     pha = (double *)malloc((m_ar * m_ar) * sizeof(double));
     phb = (double *)malloc((m_ar * m_ar) * sizeof(double));
     phc = (double *)malloc((m_ar * m_ar) * sizeof(double));
     
-    char st[100];
-    double temp;
   
     // Initialize matriz A with 1s
     for(int i = 0; i < m_ar; i++)
@@ -239,20 +227,16 @@ void OnMultBlock(int m_ar, int m_br, int bkSize)
     for(int i = 0; i < m_ar*m_br; ++i)
         phc[i] = 0;
     
-    Time1 = clock();
+    double start = omp_get_wtime();
 
     int blocksPerRow = m_ar / bkSize;
 
-
-    // blockY ---> Gets the current block row
-    // blockX ---> Gets the current block column
     for(int blockY = 0; blockY < blocksPerRow; ++blockY){
         for(int blockX = 0; blockX < blocksPerRow; ++blockX){
             int blockYindex = blockY * bkSize * m_ar;
             int blockXindex = blockX * bkSize;
             int blockIndex = blockYindex + blockXindex;
 
-            // The actual block mutiplication A dot B
             for(int block = 0; block < blocksPerRow; ++block){
                 int blockAindex = blockYindex + block*bkSize;
                 int blockBindex = block * bkSize * m_ar + blockXindex;
@@ -270,9 +254,9 @@ void OnMultBlock(int m_ar, int m_br, int bkSize)
         }
     }
 
-    Time2 = clock();
-    sprintf(st, "Time: %3.3f seconds\n", (double)(Time2 - Time1) / CLOCKS_PER_SEC);
-    cout << st;
+    double end = omp_get_wtime(); // End timing
+
+    printf("Execution Time (OMP1): %f seconds\n", end - start);
 
     cout << "Result matrix: " << endl;
     for(int i = 0; i < 1; ++i){

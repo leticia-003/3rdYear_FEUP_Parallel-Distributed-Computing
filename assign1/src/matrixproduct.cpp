@@ -233,26 +233,35 @@ void OnMultBlock(int m_ar, int m_br, int bkSize)
 
     int blocksPerRow = m_ar / bkSize;
 
-    for(int blockY = 0; blockY < blocksPerRow; ++blockY){
-        for(int blockX = 0; blockX < blocksPerRow; ++blockX){
-            int blockYindex = blockY * bkSize * m_ar;
-            int blockXindex = blockX * bkSize;
-            int blockIndex = blockYindex + blockXindex;
+    for (int blockY = 0; blockY < blocksPerRow; ++blockY) {
+        for (int blockX = 0; blockX < blocksPerRow; ++blockX) {
+            int row_start_C = blockY * bkSize;
+            int col_start_C = blockX * bkSize;
 
-            for(int block = 0; block < blocksPerRow; ++block){
-                int blockAindex = blockYindex + block*bkSize;
-                int blockBindex = block * bkSize * m_ar + blockXindex;
+            int bkSize_Y = min(bkSize, m_ar - row_start_C);  
+            int bkSize_X = min(bkSize, m_ar - col_start_C);  
 
-                for(int i = 0; i < bkSize; ++i){
-                    for(int n = 0; n < bkSize; ++n){
-                        for(int j = 0; j < bkSize; ++j){
-                            phc[blockIndex + (i*m_ar+j)] += pha[blockAindex + (i*m_ar+n)] * phb[blockBindex + (n*m_ar+j)];
+            for (int block = 0; block < blocksPerRow; ++block) {
+                int row_start_A = row_start_C;
+                int col_start_A = block * bkSize;
+                int row_start_B = block * bkSize;
+                int col_start_B = col_start_C;
+
+                int bkSize_A = min(bkSize, m_ar - col_start_A);
+                int bkSize_B = min(bkSize, m_ar - row_start_B);
+
+                for (int i = 0; i < bkSize_Y; ++i) {
+                    for (int n = 0; n < bkSize_A; ++n) {
+                        for (int j = 0; j < bkSize_X; ++j) {
+                            int indexC = (row_start_C + i) * m_ar + (col_start_C + j);
+                            int indexA = (row_start_A + i) * m_ar + (col_start_A + n);
+                            int indexB = (row_start_B + n) * m_ar + (col_start_B + j);
+                            
+                            phc[indexC] += pha[indexA] * phb[indexB];
                         }
                     }
                 }
-
             }
-
         }
     }
 

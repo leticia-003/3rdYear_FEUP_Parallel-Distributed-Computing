@@ -92,6 +92,9 @@ void OnMultLine(int m_ar, int m_br)
     for (i = 0; i < m_br; i++)
         for (j = 0; j < m_br; j++)
             phb[i * m_br + j] = (double)(i + 1);
+    
+    for(int i = 0; i < m_ar*m_br; ++i)
+        phc[i] = 0;
 
     // Start timing
     double start = omp_get_wtime();
@@ -139,6 +142,9 @@ void OnMultLine_OMP1(int m_ar, int m_br)
     for (int i = 0; i < m_br; i++)
         for (int j = 0; j < m_br; j++)
             phb[i * m_br + j] = i + 1;
+    
+    for(int i = 0; i < m_ar*m_br; ++i)
+        phc[i] = 0;
 
     double start = omp_get_wtime(); // Start timing
 
@@ -156,6 +162,13 @@ void OnMultLine_OMP1(int m_ar, int m_br)
     double end = omp_get_wtime(); // End timing
 
     printf("Execution Time (OMP1): %f seconds\n", end - start);
+
+    cout << "Result matrix: " << endl;
+    for (int i = 0; i < 1; i++) {
+        for (int j = 0; j < min(10, m_br); j++)
+            cout << phc[j] << " ";
+    }
+    cout << endl;
 
     free(pha);
     free(phb);
@@ -178,6 +191,9 @@ void OnMultLine_OMP2(int m_ar, int m_br)
         for (int j = 0; j < m_br; j++)
             phb[i * m_br + j] = i + 1;
 
+    for(int i = 0; i < m_ar*m_br; ++i)
+        phc[i] = 0;
+
     double start = omp_get_wtime(); // Start timing
 
     #pragma omp parallel
@@ -197,6 +213,13 @@ void OnMultLine_OMP2(int m_ar, int m_br)
     double end = omp_get_wtime(); // End timing
 
     printf("Execution Time (OMP2): %f seconds\n", end - start);
+
+    cout << "Result matrix: " << endl;
+    for (int i = 0; i < 1; i++) {
+        for (int j = 0; j < min(10, m_br); j++)
+            cout << phc[j] << " ";
+    }
+    cout << endl;
 
     free(pha);
     free(phb);
@@ -231,7 +254,7 @@ void OnMultBlock(int m_ar, int m_br, int bkSize)
     
     double start = omp_get_wtime();
 
-    int blocksPerRow = m_ar / bkSize;
+    int blocksPerRow = (m_ar + bkSize - 1) / bkSize;
 
     for (int blockY = 0; blockY < blocksPerRow; ++blockY) {
         for (int blockX = 0; blockX < blocksPerRow; ++blockX) {

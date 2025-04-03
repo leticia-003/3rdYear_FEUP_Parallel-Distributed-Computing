@@ -5,41 +5,59 @@ import java.lang.ClassNotFoundException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.List;
 
 /**
  * This class implements java Socket server
  */
 public class Server {
+    // Attributes of the Server
     public static ServerSocket server;
     public static int port = 4444;
+    public static List<Client> clients = new ArrayList<Client>();
+
+    public static Map<String, String> msgs = new HashMap<>();
+
+    // Constructors of the Server
+    public Server() {
+        //Init the basic msgs
+        msgs.put("Menu", "####### CHAT APP #######\nPlease, log in\nUsername:");
+    }
+
+    // Methods of the Server
+    public static void write(Socket sock, String msg) throws IOException {
+        ObjectOutputStream oos = new ObjectOutputStream(sock.getOutputStream());
+        oos.writeObject(msg);
+        oos.flush();
+        oos.close();
+    }
+    public static String read(Socket sock) throws IOException, ClassNotFoundException {
+        ObjectInputStream ois = new ObjectInputStream(sock.getInputStream());
+        String msg = (String) ois.readObject();
+        System.out.println(msg);
+        ois.close();
+        return msg;
+    }
+
+    public static void handleSocket(Socket sock) throws IOException {
+        String msg = msgs.get("Menu");
+        write(sock, msg);
+    }
 
     public static void listen() throws IOException, ClassNotFoundException {
         server = new ServerSocket(port);
-
         while(true){
-            System.out.println("Waiting for the client request");
-            Socket socket = server.accept();
-
-            //read from socket
-            ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
-            //write to socket
-            ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
-
-            String message = (String) ois.readObject();
-            System.out.println("Message Received: " + message);
-
-            ois.close();
-            oos.close();
-            socket.close();
-
-            //terminate the server if client sends exit request
-            if(message.equalsIgnoreCase("exit")) break;
+            Socket clientSocket = server.accept();
+            handleSocket(clientSocket);
+            System.out.println("sent");
         }
-        System.out.println("Shutting down Socket server!!");
-        server.close();
     }
 
-    public static void main(String[] args) throws IOException, ClassNotFoundException{
+    public static void main(String[] args) throws IOException, ClassNotFoundException {
+        System.out.println("Server listening on port " + port);
         listen();
     }
 

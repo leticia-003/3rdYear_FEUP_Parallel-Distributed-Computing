@@ -1,10 +1,5 @@
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.net.InetAddress;
 import java.net.Socket;
-import java.net.SocketException;
-import java.net.UnknownHostException;
 
 /**
  * Implements java client
@@ -12,9 +7,7 @@ import java.net.UnknownHostException;
 public class Client {
     // Attributes of the Client
     public String name;
-    private Socket socket;
-    private ObjectInputStream in;
-    private ObjectOutputStream out;
+    private Connection connection;
 
     // Constructors of the Client
     public Client() {}
@@ -24,24 +17,19 @@ public class Client {
 
     // Methods of the Client
     public void connect(String host, int port) throws IOException, ClassNotFoundException {
-        socket = new Socket(host, port);
-        out = new ObjectOutputStream(socket.getOutputStream());
-        in = new ObjectInputStream(socket.getInputStream());
+        this.connection = new Connection(new Socket(host, port));
     }
 
     public void write(String msg) throws IOException {
-        out.writeObject(msg);
-        out.flush();
+        this.connection.write(msg);
     }
 
     public String read() throws IOException, ClassNotFoundException {
-        return (String) in.readObject();
+        return this.connection.read();
     }
 
     public void close() throws IOException {
-        out.close();
-        in.close();
-        socket.close();
+        this.connection.close();
     }
 
 }

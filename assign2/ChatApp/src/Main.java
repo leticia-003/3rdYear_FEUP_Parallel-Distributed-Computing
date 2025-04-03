@@ -13,10 +13,7 @@ public class Main {
 
         String hostName = InetAddress.getLocalHost().getHostName();
         victor.connect(hostName, 4444);
+        System.out.println(victor.read());
         Thread.sleep(5000);
-        //victor.write("Victor");
-
-        //Client ana = new Client("Ana");
-        //ana.connect(hostName, 4444);
     }
 }

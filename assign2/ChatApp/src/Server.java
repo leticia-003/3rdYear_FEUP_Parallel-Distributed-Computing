@@ -13,41 +13,91 @@ import java.util.List;
 
 /**
  * This class implements java Socket server
+ *
  */
 public class Server {
-    // Attributes of the Server
     public static ServerSocket server;
     public static int port = 4444;
-    public static List<Client> clients = new ArrayList<Client>();
+    public static List<Client> clients = new ArrayList<>();
+    public static Database database = new Database("users.txt");
 
-    public static Map<String, String> msgs = new HashMap<>() {{
-        put("Menu", "####### CHAT APP #######\nPlease, log in\nUsername:");
-    }};
+    public Server() {}
 
-    // Constructors of the Server
-    public Server() {
-        //Init the basic msgs, with the idea of having a map with all the messages the
-        //server might have and get them with the key ?
-        msgs.put("Menu", "####### CHAT APP #######\nPlease, log in\nUsername:");
-    }
+    private void register(Connection connection) throws IOException, ClassNotFoundException {
+        connection.write("Username to register: ");
+        String username = connection.read();
 
-    // Methods of the Server
-    public static void handleConnection(Socket sock) throws IOException {
-        Connection connection = new Connection(sock);
-        connection.write("Writted"+msgs.get("Menu"));
-    }
+        connection.write("Password to register: ");
+        String password = connection.read();
 
-    public static void listen() throws IOException, ClassNotFoundException {
-        server = new ServerSocket(port);
-        while(true){
-            Socket clientSocket = server.accept();
-            handleConnection(clientSocket);
+        try {
+            database.insertUser(username, password);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
-    public static void main(String[] args) throws IOException, ClassNotFoundException {
-        System.out.println("Server listening on port " + port);
-        listen();
+    private void login(Connection connection) throws IOException, ClassNotFoundException {
+        connection.write("Username: ");
+        String username = connection.read();
+
+        connection.write("Password: ");
+        String password = connection.read();
+
+        String[] credentials = database.selectUser(username);
+
+        if(credentials == null || !(username.equals(credentials[0]) && password.equals(credentials[1])) ) {
+            System.out.println("Login Failed for user " + username);
+        }
+        else {
+            System.out.println("Login Successful for user " + username);
+        }
     }
 
+    // Handle one client in its own thread
+    private void handleClient(Socket clientSocket) {
+        new Thread(() -> {
+            try {
+                Connection connection = new Connection(clientSocket);
+
+                connection.write("1 - Login\n2-Register\n3 - Exit");
+                String option = connection.read();
+
+                switch (option) {
+                    case "1":
+                        login(connection);
+                        break;
+                    case "2":
+                        register(connection);
+                        break;
+                    case "3":
+                        connection.close();
+                        break;
+                    default:
+                        System.out.println("Invalid option");
+                        connection.close();
+                }
+
+            } catch (IOException | ClassNotFoundException e) {
+                System.out.println("Client connection error: " + e.getMessage());
+            }
+        }).start();
+    }
+
+    // Keep accepting new clients and start their threads
+    public void listen() throws IOException {
+        server = new ServerSocket(port);
+        System.out.println("Server listening on port " + port);
+
+        while (true) {
+            Socket clientSocket = server.accept();
+            System.out.println("New client connected: " + clientSocket.getRemoteSocketAddress());
+            handleClient(clientSocket);
+        }
+    }
+
+    public static void main(String[] args) throws IOException {
+        Server server = new Server();
+        server.listen();
+    }
 }

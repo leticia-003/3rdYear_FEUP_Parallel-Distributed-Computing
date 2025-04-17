@@ -7,13 +7,33 @@ import java.net.InetAddress;
  */
 
 public class Main {
-
     public static void main(String[] args) throws InterruptedException, IOException, ClassNotFoundException {
         Client victor = new Client("Victor");
 
         String hostName = InetAddress.getLocalHost().getHostName();
         victor.connect(hostName, 4444);
-        System.out.println(victor.read());
-        Thread.sleep(5000);
+
+        // Reading the menu
+        String output;
+        output = victor.read();
+        System.out.println(output);
+
+        // Select to login
+        victor.write("1");
+        output = victor.read();
+
+        // Write username
+        System.out.println(output);
+        victor.write("tobias");
+
+        // Write password
+        output = victor.read();
+        System.out.println(output);
+        victor.write("victo");
+
+        // Response
+        output = victor.read();
+        System.out.println(output);
+
     }
 }

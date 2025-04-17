@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * This class implements java Socket server
@@ -20,6 +22,7 @@ public class Server {
     public static int port = 4444;
     public static List<Client> clients = new ArrayList<>();
     public static Database database = new Database("users.txt");
+    private final ExecutorService authenticationPool = Executors.newFixedThreadPool(10); // adjust size as needed
 
     public Server() {}
 
@@ -54,9 +57,9 @@ public class Server {
         }
     }
 
-    // Handle one client in its own thread
-    private void handleClient(Socket clientSocket) {
-        new Thread(() -> {
+    private void handleAuthentication(Socket clientSocket) {
+
+        Runnable newRunnable = () -> {
             try {
                 Connection connection = new Connection(clientSocket);
 
@@ -81,7 +84,9 @@ public class Server {
             } catch (IOException | ClassNotFoundException e) {
                 System.out.println("Client connection error: " + e.getMessage());
             }
-        }).start();
+        };
+
+        authenticationPool.submit(newRunnable);
     }
 
     // Keep accepting new clients and start their threads
@@ -89,11 +94,22 @@ public class Server {
         server = new ServerSocket(port);
         System.out.println("Server listening on port " + port);
 
-        while (true) {
-            Socket clientSocket = server.accept();
-            System.out.println("New client connected: " + clientSocket.getRemoteSocketAddress());
-            handleClient(clientSocket);
-        }
+        Thread authentication = new Thread(() -> {
+            while(true){
+
+                try {
+                    Socket clientSocket = server.accept();
+                    handleAuthentication(clientSocket);
+                }
+                catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+
+            }
+        });
+
+        // Start the threads
+        authentication.start();
     }
 
     public static void main(String[] args) throws IOException {

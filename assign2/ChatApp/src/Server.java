@@ -1,15 +1,9 @@
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.lang.ClassNotFoundException;
-import java.net.ConnectException;
-import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -20,11 +14,15 @@ import java.util.concurrent.Executors;
 public class Server {
     public static ServerSocket server;
     public static int port = 4444;
-    public static List<Client> clients = new ArrayList<>();
     public static Database database = new Database("users.txt");
     private final ExecutorService authenticationPool = Executors.newFixedThreadPool(10); // adjust size as needed
+    private final ExecutorService roomsPool = Executors.newFixedThreadPool(10);
 
-    public Server() {}
+    private final Map<String, Room> rooms = new ConcurrentHashMap<>();
+
+    public Server() {
+        rooms.put("General", new Room("General"));
+    }
 
     private void register(Connection connection) throws IOException, ClassNotFoundException {
         connection.write("Username to register: ");
@@ -51,9 +49,13 @@ public class Server {
 
         if(credentials == null || !(username.equals(credentials[0]) && password.equals(credentials[1])) ) {
             System.out.println("Login Failed for user " + username);
+            connection.write("Login Failed for user " + username);
         }
         else {
             System.out.println("Login Successful for user " + username);
+            connection.write("Login Successful for user " + username);
+
+            connection.setClientName(username);
         }
     }
 
@@ -81,6 +83,17 @@ public class Server {
                         connection.close();
                 }
 
+                // After the users has logged or registed, list the available rooms
+                connection.write("\nChoose a room:\n");
+                for (String room : rooms.keySet()) {
+                    connection.write("-" + room + "\n");
+                }
+
+                String selectedRoom = connection.read();
+                Room room = rooms.get(selectedRoom);
+
+                room.addClientToWatingQueue(connection);
+
             } catch (IOException | ClassNotFoundException e) {
                 System.out.println("Client connection error: " + e.getMessage());
             }
@@ -88,6 +101,20 @@ public class Server {
 
         authenticationPool.submit(newRunnable);
     }
+
+    private void handleRooms(Room room) {
+
+        Runnable chatRunnable = () -> {
+            while (true) {
+                Connection newClient = room.removeClientFromWatingQueue();
+                if (newClient != null)
+                    room.broadcast("["+newClient.getClientName()+"] : Just entered the room");
+            }
+        };
+
+        roomsPool.submit(chatRunnable);
+    }
+
 
     // Keep accepting new clients and start their threads
     public void listen() throws IOException {
@@ -107,6 +134,10 @@ public class Server {
 
             }
         });
+
+        for (Room room : rooms.values()) {
+            handleRooms(room);
+        }
 
         // Start the threads
         authentication.start();

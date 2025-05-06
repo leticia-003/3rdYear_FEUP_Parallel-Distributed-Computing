@@ -4,6 +4,7 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 
 public class Connection {
+    private String clientName;
     private Socket socket;
     private ObjectOutputStream out;
     private ObjectInputStream in;
@@ -21,6 +22,14 @@ public class Connection {
     public void write(String msg) throws IOException {
         this.out.writeObject(msg);
         this.out.flush();
+    }
+
+    public void setClientName(String clientName) {
+        this.clientName = clientName;
+    }
+
+    public String getClientName() {
+        return this.clientName;
     }
 
     public void close() throws IOException {

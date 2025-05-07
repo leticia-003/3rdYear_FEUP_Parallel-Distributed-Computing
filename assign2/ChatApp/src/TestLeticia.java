@@ -6,34 +6,39 @@ import java.net.InetAddress;
     I created this Main Class just for the matter of testing the Client - Server relationship
  */
 
-public class Main {
+public class TestLeticia {
     public static void main(String[] args) throws InterruptedException, IOException, ClassNotFoundException {
-        Client victor = new Client("Victor");
+        Client leticia = new Client("Leticia");
 
         String hostName = InetAddress.getLocalHost().getHostName();
-        victor.connect(hostName, 4444);
+        leticia.connect(hostName, 4444);
 
         // Reading the menu
         String output;
-        output = victor.read();
+        output = leticia.read();
         System.out.println(output);
 
         // Select to login
-        victor.write("1");
-        output = victor.read();
+        leticia.write("1");
+        output = leticia.read();
 
         // Write username
         System.out.println(output);
-        victor.write("tobias");
+        leticia.write("victo");
 
         // Write password
-        output = victor.read();
+        output = leticia.read();
         System.out.println(output);
-        victor.write("victo");
+        leticia.write("victo");
 
-        // Response
-        output = victor.read();
+        // Response of the login
+        output = leticia.read();
         System.out.println(output);
+
+        // Selecting a room if passed on the login
+        output = leticia.read();
+        System.out.println(output);
+        leticia.write("General");
 
     }
 }

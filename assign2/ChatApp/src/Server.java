@@ -83,11 +83,14 @@ public class Server {
                         connection.close();
                 }
 
-                // After the users has logged or registed, list the available rooms
-                connection.write("\nChoose a room:\n");
-                for (String room : rooms.keySet()) {
-                    connection.write("-" + room + "\n");
+                // After the users has logged or registered, list the available rooms
+                StringBuilder roomsChoice = new StringBuilder();
+                roomsChoice.append("Rooms : \n");
+                for (String roomName : rooms.keySet()) {
+                    roomsChoice.append(roomName);
+                    roomsChoice.append("\n");
                 }
+                connection.write(roomsChoice.toString());
 
                 String selectedRoom = connection.read();
                 Room room = rooms.get(selectedRoom);
@@ -102,18 +105,46 @@ public class Server {
         authenticationPool.submit(newRunnable);
     }
 
-    private void handleRooms(Room room) {
 
-        Runnable chatRunnable = () -> {
+    /*
+        I think the rooms have to deal with
+        new clients and
+        broadcast messages.
+        Which are implemented by Runnables/Thread bellow
+     */
+    private void handleRooms(Room room) {
+        Runnable newClientsHandler = () -> {
             while (true) {
                 Connection newClient = room.removeClientFromWatingQueue();
-                if (newClient != null)
-                    room.broadcast("["+newClient.getClientName()+"] : Just entered the room");
+                if (newClient != null) {
+                    room.addClient(newClient);
+                    room.broadcast("[" + newClient.getClientName() + "] joined the room.");
+                    room.startListeningFromClient(newClient);
+                }
+
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
             }
         };
 
-        roomsPool.submit(chatRunnable);
+        Runnable broadcastHandler = () -> {
+            while (true) {
+                try {
+                    String msg = room.takeMessage();
+                    room.broadcast(msg);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        };
+
+        roomsPool.submit(newClientsHandler);
+        roomsPool.submit(broadcastHandler);
     }
+
 
 
     // Keep accepting new clients and start their threads
@@ -134,13 +165,11 @@ public class Server {
 
             }
         });
+        authentication.start();
 
         for (Room room : rooms.values()) {
             handleRooms(room);
         }
-
-        // Start the threads
-        authentication.start();
     }
 
     public static void main(String[] args) throws IOException {

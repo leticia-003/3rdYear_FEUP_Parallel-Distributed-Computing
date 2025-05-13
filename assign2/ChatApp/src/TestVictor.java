@@ -12,7 +12,6 @@ public class TestVictor {
         Scanner  stdin = new Scanner(System.in);
         String   host  = InetAddress.getLocalHost().getHostName();
 
-        // keep the constructor that tags the connection with Victor’s name
         Client c = new Client("Victor");
         c.connect(host, 4444);
 
@@ -35,7 +34,7 @@ public class TestVictor {
             c.write(line);                    // send to server
             if ("/quit".equalsIgnoreCase(line.trim())) {
                 c.close();
-                break;                        // exit cleanly
+                break;
             }
         }
     }

@@ -1,44 +1,39 @@
-import java.io.IOException;
 import java.net.InetAddress;
-
+import java.util.Scanner;
 
 /*
     I created this Main Class just for the matter of testing the Client - Server relationship
  */
 
-public class TestLeticia {
-    public static void main(String[] args) throws InterruptedException, IOException, ClassNotFoundException {
-        Client leticia = new Client("Leticia");
+public class TestLeticia{
+    public static void main(String[] args) throws Exception {
+        Scanner   stdin  = new Scanner(System.in);
+        String    host   = InetAddress.getLocalHost().getHostName();
 
-        String hostName = InetAddress.getLocalHost().getHostName();
-        leticia.connect(hostName, 4444);
+        Client c = new Client();
+        c.connect(host, 4444);
 
-        // Reading the menu
-        String output;
-        output = leticia.read();
-        System.out.println(output);
+        /* ---------- READER thread ---------- */
+        Thread reader = Thread.startVirtualThread(() -> {
+            try {
+                while (true) {
+                    String srv = c.read();
+                    System.out.print(srv);
+                    System.out.flush();
+                }
+            } catch (Exception e) {
+                System.out.println("connection closed: " + e);
+            }
+        });
 
-        // Select to login
-        leticia.write("1");
-        output = leticia.read();
-
-        // Write username
-        System.out.println(output);
-        leticia.write("victo");
-
-        // Write password
-        output = leticia.read();
-        System.out.println(output);
-        leticia.write("victo");
-
-        // Response of the login
-        output = leticia.read();
-        System.out.println(output);
-
-        // Selecting a room if passed on the login
-        output = leticia.read();
-        System.out.println(output);
-        leticia.write("General");
-
+        /* ---------- WRITER loop (main thread) ---------- */
+        while (true) {
+            String user = stdin.nextLine();      // waiting for keyboard
+            c.write(user);                       // send to server
+            if ("/quit".equalsIgnoreCase(user.trim())) {
+                c.close();
+                break;
+            }
+        }
     }
 }

@@ -76,11 +76,11 @@ public class Room {
             try {
                 while (true) {
                     String msg = client.read();
-                    enqueueMessage("[" + client.getClientName() + "]: " + msg);
+                    enqueueMessage("[" + client.getClientName() + "]: " + msg + "\n");
                 }
             } catch (Exception e) {
                 removeClient(client);
-                broadcast("[" + client.getClientName() + "] left the room.");
+                broadcast("[" + client.getClientName() + "] left the room.\n");
             }
         });
 

@@ -1,68 +1,44 @@
 import java.io.IOException;
 import java.net.InetAddress;
+import java.util.Scanner;
 
 
 /*
     I created this Main Class just for the matter of testing the Client - Server relationship
  */
 public class TestVictor {
-    public static void main(String[] args) throws InterruptedException, IOException, ClassNotFoundException {
-        Client victor = new Client("Victor");
+    public static void main(String[] args) throws Exception {
+        /* ---------- SET‑UP ---------- */
+        Scanner  stdin = new Scanner(System.in);
+        String   host  = InetAddress.getLocalHost().getHostName();
 
-        String hostName = InetAddress.getLocalHost().getHostName();
-        victor.connect(hostName, 4444);
+        // keep the constructor that tags the connection with Victor’s name
+        Client c = new Client("Victor");
+        c.connect(host, 4444);
 
-        // Reading the menu
-        String output;
-        output = victor.read();
-        System.out.println(output);
-
-        // Select to login
-        victor.write("1");
-        output = victor.read();
-
-        // Write username
-        System.out.println(output);
-        victor.write("victo");
-
-        // Write password
-        output = victor.read();
-        System.out.println(output);
-        victor.write("victo");
-
-        // Response of the login
-        output = victor.read();
-        System.out.println(output);
-
-        // Selecting a room if passed on the login
-        output = victor.read();
-        System.out.println(output);
-        victor.write("General");
-
-        System.out.println("Connected. Listening for messages for 1 minute...");
-
-        // Start background thread to read messages from the server
-        Thread readerThread = new Thread(() -> {
+        /* ---------- READER thread ---------- */
+        Thread reader = Thread.startVirtualThread(() -> {
             try {
-                while (!Thread.currentThread().isInterrupted()) {
-                    String message = victor.read();
-                    if (message != null) {
-                        System.out.println(message);
-                    }
+                while (true) {
+                    String srv = c.read();          // blocks
+                    System.out.print(srv);          // show every line from server
+                    System.out.flush();
                 }
-            } catch (IOException | ClassNotFoundException e) {
-                System.out.println("Disconnected from server or error reading: " + e.getMessage());
+            } catch (Exception e) {
+                System.out.println("connection closed: " + e);
             }
         });
 
-        readerThread.start();
-
-        // Let the client run for 1 minute
-        Thread.sleep(60_000);
-
-        // Stop reading and disconnect
-        readerThread.interrupt();
-        victor.close();
-        System.out.println("Disconnected after 1 minute.");
+        /* ---------- WRITER loop (main thread) ---------- */
+        while (true) {
+            String line = stdin.nextLine();   // wait for keyboard
+            c.write(line);                    // send to server
+            if ("/quit".equalsIgnoreCase(line.trim())) {
+                c.close();
+                break;                        // exit cleanly
+            }
+        }
     }
 }
+
+

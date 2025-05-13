@@ -48,12 +48,12 @@ public class Server {
         String[] credentials = database.selectUser(username);
 
         if(credentials == null || !(username.equals(credentials[0]) && password.equals(credentials[1])) ) {
-            System.out.println("Login Failed for user " + username);
-            connection.write("Login Failed for user " + username);
+            System.out.println("Login Failed for user " + username + "\n");
+            connection.write("Login Failed for user " + username + "\n");
         }
         else {
-            System.out.println("Login Successful for user " + username);
-            connection.write("Login Successful for user " + username);
+            System.out.println("Login Successful for user " + username + "\n");
+            connection.write("Login Successful for user " + username + "\n");
 
             connection.setClientName(username);
         }
@@ -65,7 +65,7 @@ public class Server {
             try {
                 Connection connection = new Connection(clientSocket);
 
-                connection.write("1 - Login\n2-Register\n3 - Exit");
+                connection.write("1 - Login\n2-Register\n3 - Exit\n");
                 String option = connection.read();
 
                 switch (option) {
@@ -83,19 +83,33 @@ public class Server {
                         connection.close();
                 }
 
-                // After the users has logged or registered, list the available rooms
-                StringBuilder roomsChoice = new StringBuilder();
-                roomsChoice.append("Rooms : \n");
-                for (String roomName : rooms.keySet()) {
-                    roomsChoice.append(roomName);
-                    roomsChoice.append("\n");
+                while (true) {
+                    StringBuilder sb = new StringBuilder("Choose a room (new name ⇒ creates it)\n");
+                    rooms.keySet().forEach(r -> sb.append("• ").append(r).append('\n'));
+                    sb.append("(prefix with \"AI:\" for an AI room)\n");
+                    connection.write(sb.toString());
+
+                    String selected = connection.read().trim();
+
+                    /* ---- 3. Normal room or AI? ---- */
+                    Room room = rooms.get(selected);
+                    if (room == null) {
+                        if (selected.toUpperCase().startsWith("AI:")) {
+                            String roomName = selected.substring(3).trim();
+                            connection.write("Enter AI prompt for room \"" + roomName + "\":\n");
+                            String prompt = connection.read();
+
+                            // room = new AiRoom(roomName, prompt /*, ollamaClient */);
+                        } else {
+                            room = new Room(selected);
+                        }
+                        rooms.put(selected, room);
+                        handleRooms(room);
+                    }
+
+                    room.addClientToWatingQueue(connection);
+                    break;
                 }
-                connection.write(roomsChoice.toString());
-
-                String selectedRoom = connection.read();
-                Room room = rooms.get(selectedRoom);
-
-                room.addClientToWatingQueue(connection);
 
             } catch (IOException | ClassNotFoundException e) {
                 System.out.println("Client connection error: " + e.getMessage());
@@ -118,7 +132,7 @@ public class Server {
                 Connection newClient = room.removeClientFromWatingQueue();
                 if (newClient != null) {
                     room.addClient(newClient);
-                    room.broadcast("[" + newClient.getClientName() + "] joined the room.");
+                    room.broadcast("[" + newClient.getClientName() + "] joined the room.\n");
                     room.startListeningFromClient(newClient);
                 }
 

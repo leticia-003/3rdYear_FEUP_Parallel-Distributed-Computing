@@ -6,6 +6,11 @@ public class Database {
 
     public Database(String filePath) {
         this.file = new File(filePath);
+        try {
+            if (!file.exists()) file.createNewFile();
+        } catch (IOException e) {
+            throw new RuntimeException("Cannot create DB file: " + file.getAbsolutePath(), e);
+        }
     }
 
     public void insertUser(String username, String password) throws IOException {

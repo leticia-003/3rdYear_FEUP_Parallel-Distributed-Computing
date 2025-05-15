@@ -16,11 +16,8 @@ using namespace std;
 void OnMult(int m_ar, int m_br) 
 {
 	
-	SYSTEMTIME Time1, Time2;
-	
-	char st[100];
-	double temp;
 	int i, j, k;
+    double temp;
 
 	double *pha, *phb, *phc;
 	
@@ -42,7 +39,7 @@ void OnMult(int m_ar, int m_br)
 
 
 
-    Time1 = clock();
+    double start = omp_get_wtime();
 
 	for(i=0; i<m_ar; i++)
 	{	for( j=0; j<m_br; j++)
@@ -56,9 +53,9 @@ void OnMult(int m_ar, int m_br)
 	}
 
 
-    Time2 = clock();
-	sprintf(st, "Time: %3.3f seconds\n", (double)(Time2 - Time1) / CLOCKS_PER_SEC);
-	cout << st;
+    double end = omp_get_wtime(); // End timing
+
+    printf("Execution Time: %f seconds\n", end - start);
 
 	// display 10 elements of the result matrix tto verify correctness
 	cout << "Result matrix: " << endl;
@@ -78,11 +75,8 @@ void OnMult(int m_ar, int m_br)
 // add code here for line x line matriz multiplication
 void OnMultLine(int m_ar, int m_br)
 {
-	SYSTEMTIME Time1, Time2;
-
-    char st[100];
-    double temp;
     int i, j, k;
+    double temp;
 
     double *pha, *phb, *phc;
 
@@ -98,9 +92,12 @@ void OnMultLine(int m_ar, int m_br)
     for (i = 0; i < m_br; i++)
         for (j = 0; j < m_br; j++)
             phb[i * m_br + j] = (double)(i + 1);
+    
+    for(int i = 0; i < m_ar*m_br; ++i)
+        phc[i] = 0;
 
     // Start timing
-    Time1 = clock();
+    double start = omp_get_wtime();
 
     // Row-wise multiplication
     for (i = 0; i < m_ar; i++) {
@@ -113,9 +110,9 @@ void OnMultLine(int m_ar, int m_br)
     }
 
     // End timing
-    Time2 = clock();
-    sprintf(st, "Time: %3.3f seconds\n", (double)(Time2 - Time1) / CLOCKS_PER_SEC);
-    cout << st;
+    double end = omp_get_wtime(); // End timing
+
+    printf("Execution Time: %f seconds\n", end - start);
 
     // Display 10 elements of the result matrix to verify correctness
     cout << "Result matrix: " << endl;
@@ -145,6 +142,9 @@ void OnMultLine_OMP1(int m_ar, int m_br)
     for (int i = 0; i < m_br; i++)
         for (int j = 0; j < m_br; j++)
             phb[i * m_br + j] = i + 1;
+    
+    for(int i = 0; i < m_ar*m_br; ++i)
+        phc[i] = 0;
 
     double start = omp_get_wtime(); // Start timing
 
@@ -162,6 +162,13 @@ void OnMultLine_OMP1(int m_ar, int m_br)
     double end = omp_get_wtime(); // End timing
 
     printf("Execution Time (OMP1): %f seconds\n", end - start);
+
+    cout << "Result matrix: " << endl;
+    for (int i = 0; i < 1; i++) {
+        for (int j = 0; j < min(10, m_br); j++)
+            cout << phc[j] << " ";
+    }
+    cout << endl;
 
     free(pha);
     free(phb);
@@ -184,6 +191,9 @@ void OnMultLine_OMP2(int m_ar, int m_br)
         for (int j = 0; j < m_br; j++)
             phb[i * m_br + j] = i + 1;
 
+    for(int i = 0; i < m_ar*m_br; ++i)
+        phc[i] = 0;
+
     double start = omp_get_wtime(); // Start timing
 
     #pragma omp parallel
@@ -204,6 +214,13 @@ void OnMultLine_OMP2(int m_ar, int m_br)
 
     printf("Execution Time (OMP2): %f seconds\n", end - start);
 
+    cout << "Result matrix: " << endl;
+    for (int i = 0; i < 1; i++) {
+        for (int j = 0; j < min(10, m_br); j++)
+            cout << phc[j] << " ";
+    }
+    cout << endl;
+
     free(pha);
     free(phb);
     free(phc);
@@ -213,7 +230,79 @@ void OnMultLine_OMP2(int m_ar, int m_br)
 // add code here for block x block matriz multiplication
 void OnMultBlock(int m_ar, int m_br, int bkSize)
 {
+
+
+    double *pha, *phb, *phc;
+    pha = (double *)malloc((m_ar * m_ar) * sizeof(double));
+    phb = (double *)malloc((m_ar * m_ar) * sizeof(double));
+    phc = (double *)malloc((m_ar * m_ar) * sizeof(double));
     
+  
+    // Initialize matriz A with 1s
+    for(int i = 0; i < m_ar; i++)
+        for(int j = 0; j < m_ar; ++j)
+            pha[i*m_ar + j] = (double)1.0;
+    
+    // Initialize matriz B with i+1
+    for(int i = 0; i < m_br; i++)
+        for(int j = 0; j < m_br; ++j)
+            phb[i*m_br + j] = (double)(i+1);
+
+    // Initialize matriz C with 0s
+    for(int i = 0; i < m_ar*m_br; ++i)
+        phc[i] = 0;
+    
+    double start = omp_get_wtime();
+
+    int blocksPerRow = (m_ar + bkSize - 1) / bkSize;
+
+    for (int blockY = 0; blockY < blocksPerRow; ++blockY) {
+        for (int blockX = 0; blockX < blocksPerRow; ++blockX) {
+            int row_start_C = blockY * bkSize;
+            int col_start_C = blockX * bkSize;
+
+            int bkSize_Y = min(bkSize, m_ar - row_start_C);  
+            int bkSize_X = min(bkSize, m_ar - col_start_C);  
+
+            for (int block = 0; block < blocksPerRow; ++block) {
+                int row_start_A = row_start_C;
+                int col_start_A = block * bkSize;
+                int row_start_B = block * bkSize;
+                int col_start_B = col_start_C;
+
+                int bkSize_A = min(bkSize, m_ar - col_start_A);
+                int bkSize_B = min(bkSize, m_ar - row_start_B);
+
+                for (int i = 0; i < bkSize_Y; ++i) {
+                    for (int n = 0; n < bkSize_A; ++n) {
+                        for (int j = 0; j < bkSize_X; ++j) {
+                            int indexC = (row_start_C + i) * m_ar + (col_start_C + j);
+                            int indexA = (row_start_A + i) * m_ar + (col_start_A + n);
+                            int indexB = (row_start_B + n) * m_ar + (col_start_B + j);
+                            
+                            phc[indexC] += pha[indexA] * phb[indexB];
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    double end = omp_get_wtime(); // End timing
+
+    printf("Execution Time: %f seconds\n", end - start);
+
+    cout << "Result matrix: " << endl;
+    for(int i = 0; i < 1; ++i){
+    for(int j = 0; j < min(10,m_br); ++j)
+        cout << phc[j] << " ";
+    }
+
+    cout << endl;
+
+    free(pha);
+    free(phb);
+    free(phc);
     
 }
 
@@ -296,6 +385,8 @@ int main (int argc, char *argv[])
 		cout << endl << "1. Multiplication" << endl;
 		cout << "2. Line Multiplication" << endl;
 		cout << "3. Block Multiplication" << endl;
+        cout << "4. Line Multiplication (Parallel 1)" << endl;
+        cout << "5. Line Multiplication (Parallel 2)"<< endl;
 		cout << "Selection?: ";
 		cin >>op;
 		if (op == 0)
@@ -321,6 +412,14 @@ int main (int argc, char *argv[])
 				cin >> blockSize;
 				OnMultBlock(lin, col, blockSize);  
 				break;
+            case 4:
+                OnMultLine_OMP1(lin, col);
+                break;
+            case 5:
+                OnMultLine_OMP2(lin, col);
+                break;
+            default:
+                op == 0;
 
 		}
 

@@ -2,6 +2,8 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Scanner;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class OllamaClient {
     private final String model;
@@ -25,21 +27,35 @@ public class OllamaClient {
             os.write(jsonPayload.getBytes());
         }
 
-        Scanner scanner = new Scanner(connection.getInputStream()).useDelimiter("\\A");
-        String response = scanner.hasNext() ? scanner.next() : "";
-        scanner.close();
+        String response;
+        try (Scanner scanner = new Scanner(connection.getInputStream()).useDelimiter("\\A")) {
+            response = scanner.hasNext() ? scanner.next() : "";
+        } finally {
+            connection.disconnect(); // ensure connection is always closed
+        }
 
-        connection.disconnect();
+        Pattern pattern = Pattern.compile("\"response\"\\s*:\\s*\"((?:\\\\\"|[^\"])*)\"");
+        Matcher matcher = pattern.matcher(response);
 
-        // manually parse response
-        int start = response.indexOf("\"response\":\"") + 11;
-        int end = response.indexOf("\",", start);
-        if (start < 11 || end < 0) return "[Bot] Error parsing response";
-        return response.substring(start, end);
+        if (matcher.find()) {
+            return matcher.group(1)
+                    .replace("\\n", "\n")
+                    .replace("\\\"", "\"")
+                    .replace("\\\\", "\\"); // unescape backslashes
+        } else {
+            return "[Bot] Error parsing response";
+        }
     }
 
     private String escapeJson(String s) {
         return s.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 }
+
+
+
+
+
+
+
 

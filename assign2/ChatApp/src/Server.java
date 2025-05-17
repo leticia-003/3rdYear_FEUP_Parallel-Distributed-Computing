@@ -65,7 +65,7 @@ public class Server {
             try {
                 Connection connection = new Connection(clientSocket);
 
-                connection.write("1 - Login\n2-Register\n3 - Exit\n");
+                connection.write("1 - Login\n2- Register\n3 - Exit\n");
                 String option = connection.read();
 
                 switch (option) {
@@ -99,7 +99,8 @@ public class Server {
                             connection.write("Enter AI prompt for room \"" + roomName + "\":\n");
                             String prompt = connection.read();
 
-                            // room = new AiRoom(roomName, prompt /*, ollamaClient */);
+                            OllamaClient ollamaClient = new OllamaClient("llama3");
+                            room = new AIRoom(roomName, prompt, ollamaClient);
                         } else {
                             room = new Room(selected);
                         }

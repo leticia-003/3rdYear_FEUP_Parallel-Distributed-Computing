@@ -1,6 +1,10 @@
+import java.util.ArrayList;
+import java.util.List;
+
 public class AIRoom extends Room {
     private String systemPrompt = null;
     private final OllamaClient ollamaClient;
+    private final List<String> conversationHistory = new ArrayList<>();
 
     public AIRoom(String name, OllamaClient client) {
         super(name);
@@ -23,16 +27,12 @@ public class AIRoom extends Room {
     public void startListeningFromClient(Connection client) {
         Thread reader = new Thread(() -> {
             try {
-                // Ask for prompt first time
+                // Ask for prompt
                 client.write("Enter AI prompt for room \"" + getName() + "\":\n");
                 String prompt = client.read();
                 setSystemPrompt(prompt);
 
-                // Generate initial response and send it
-                String botReply = ollamaClient.generateResponse(prompt);
-                enqueueMessage("[Bot]: " + botReply + "\n");
-
-                // Then enter normal chat loop
+                // normal chat loop
                 while (true) {
                     String userMsg = client.read();
                     if (userMsg == null || userMsg.trim().isEmpty()) continue;
@@ -40,7 +40,7 @@ public class AIRoom extends Room {
                     String userFormatted = "[" + client.getClientName() + "]: " + userMsg;
                     enqueueMessage(userFormatted + "\n");
 
-                    botReply = ollamaClient.generateResponse(userMsg);
+                    String botReply = ollamaClient.generateResponse(userMsg);
                     enqueueMessage("[Bot]: " + botReply + "\n");
                 }
             } catch (Exception e) {

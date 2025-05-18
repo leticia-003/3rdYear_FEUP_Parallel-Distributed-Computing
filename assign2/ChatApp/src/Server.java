@@ -14,7 +14,7 @@ import java.util.concurrent.Executors;
 public class Server {
     public static ServerSocket server;
     public static int port = 4444;
-    public static Database database = new Database("users.txt");
+    public static Database database = new Database("assign2/doc/users.txt");
     private final ExecutorService authenticationPool = Executors.newFixedThreadPool(10); // adjust size as needed
     private final ExecutorService roomsPool = Executors.newFixedThreadPool(10);
 
@@ -65,7 +65,7 @@ public class Server {
             try {
                 Connection connection = new Connection(clientSocket);
 
-                connection.write("1 - Login\n2-Register\n3 - Exit\n");
+                connection.write("1 - Login\n2- Register\n3 - Exit\n");
                 String option = connection.read();
 
                 switch (option) {
@@ -83,6 +83,13 @@ public class Server {
                         connection.close();
                 }
 
+                // stops unauthenticated users
+                if (connection.getClientName() == null) {
+                    connection.write("Authentication failed. Disconnecting.\n");
+                    connection.close();
+                    return;
+                }
+
                 while (true) {
                     StringBuilder sb = new StringBuilder("Choose a room (new name ⇒ creates it)\n");
                     rooms.keySet().forEach(r -> sb.append("• ").append(r).append('\n'));
@@ -96,10 +103,8 @@ public class Server {
                     if (room == null) {
                         if (selected.toUpperCase().startsWith("AI:")) {
                             String roomName = selected.substring(3).trim();
-                            connection.write("Enter AI prompt for room \"" + roomName + "\":\n");
-                            String prompt = connection.read();
-
-                            // room = new AiRoom(roomName, prompt /*, ollamaClient */);
+                            OllamaClient ollamaClient = new OllamaClient("phi3:3.8b");
+                            room = new AIRoom(roomName, ollamaClient);
                         } else {
                             room = new Room(selected);
                         }

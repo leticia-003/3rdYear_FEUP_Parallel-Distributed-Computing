@@ -4,9 +4,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
 /**
  * This class implements java Socket server
  *
@@ -15,8 +12,6 @@ public class Server {
     public static ServerSocket server;
     public static int port = 4444;
     public static Database database = new Database("assign2/doc/users.txt");
-    private final ExecutorService authenticationPool = Executors.newFixedThreadPool(10); // adjust size as needed
-    private final ExecutorService roomsPool = Executors.newFixedThreadPool(10);
 
     private final Map<String, Room> rooms = new ConcurrentHashMap<>();
 
@@ -36,6 +31,8 @@ public class Server {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+
+        connection.setClientName(username);
     }
 
     private void login(Connection connection) throws IOException, ClassNotFoundException {
@@ -121,7 +118,8 @@ public class Server {
             }
         };
 
-        authenticationPool.submit(newRunnable);
+        Thread.startVirtualThread(newRunnable);
+
     }
 
 
@@ -160,8 +158,9 @@ public class Server {
             }
         };
 
-        roomsPool.submit(newClientsHandler);
-        roomsPool.submit(broadcastHandler);
+        Thread.startVirtualThread(newClientsHandler);
+        Thread.startVirtualThread(broadcastHandler);
+
     }
 
 
@@ -171,24 +170,15 @@ public class Server {
         server = new ServerSocket(port);
         System.out.println("Server listening on port " + port);
 
-        Thread authentication = new Thread(() -> {
-            while(true){
-
-                try {
-                    Socket clientSocket = server.accept();
-                    handleAuthentication(clientSocket);
-                }
-                catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-
-            }
-        });
-        authentication.start();
-
         for (Room room : rooms.values()) {
             handleRooms(room);
         }
+
+        while (true) {
+            Socket clientSocket = server.accept();
+            Thread.startVirtualThread(() -> handleAuthentication(clientSocket));
+        }
+
     }
 
     public static void main(String[] args) throws IOException {

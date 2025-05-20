@@ -101,7 +101,7 @@ public class Server {
                     if (room == null) {
                         if (selected.toUpperCase().startsWith("AI:")) {
                             String roomName = selected.substring(3).trim();
-                            OllamaClient ollamaClient = new OllamaClient("phi3:3.8b");
+                            OllamaClient ollamaClient = new OllamaClient("llama3");
                             room = new AIRoom(roomName, ollamaClient);
                         } else {
                             room = new Room(selected);

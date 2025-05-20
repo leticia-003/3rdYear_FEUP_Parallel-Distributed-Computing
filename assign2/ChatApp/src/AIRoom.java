@@ -32,6 +32,12 @@ public class AIRoom extends Room {
                     client.write("Enter AI prompt for room \"" + getName() + "\":\n");
                     String prompt = client.read();
                     setSystemPrompt(prompt);
+                    client.write("Prompt set. You can start messaging.\n");
+                }
+                else{
+                    client.write("Room prompt is already set.\n");
+                    client.write("Room prompt: " + systemPrompt + "\n");
+                    client.write("You can start messaging.\n");
                 }
 
                 // Normal chat loop
@@ -41,9 +47,14 @@ public class AIRoom extends Room {
 
                     String userFormatted = "[" + client.getClientName() + "]: " + userMsg;
                     enqueueMessage(userFormatted + "\n");
-                    conversationHistory.add(userFormatted);
-
-                    String botReply = ollamaClient.generateResponse(userMsg);
+                    if (conversationHistory.size() < 5){
+                        conversationHistory.add(userMsg);
+                    }
+                    else {
+                        conversationHistory.removeFirst();
+                        conversationHistory.add(userMsg);
+                    }
+                    String botReply = buildPrompt(userMsg);
                     enqueueMessage("[Bot]: " + botReply + "\n");
                 }
             } catch (Exception e) {
@@ -53,5 +64,29 @@ public class AIRoom extends Room {
         });
 
         reader.start();
+    }
+
+    private String buildPrompt(String message) {
+        // build prompt to pass on to LLM so it sounds more like a personalized chat room
+        String prompt = "This is a chat room's prompt and latest messages. Keep them in mind when answering this prompt. Try to sound like a participant in the conversation but don't pretend to be a human. Look out to see if someone asked you a question, answer only the latest one and use the other messages as context.";
+        String reply = "";
+
+        prompt += "\nSystem prompt: " + systemPrompt + "\n";
+
+        for (int i = 0; i < conversationHistory.size(); i++){
+            prompt += "Message: " + conversationHistory.get(i) + "\n";
+        }
+
+
+
+        try{
+            System.out.println("Sending " + prompt + "...");
+            reply = ollamaClient.generateResponse(prompt);
+        } catch (Exception e) {
+            reply = "An error occurred while generating the reply: " + e.getMessage();
+            throw new RuntimeException(e);
+        }
+
+        return reply;
     }
 }

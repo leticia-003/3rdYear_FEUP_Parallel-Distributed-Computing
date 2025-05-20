@@ -11,7 +11,7 @@ import java.util.*;
 
     usersLogged : The users that are in the room
     watingQueue : The users that want to get in the room are put in this queue. So whenever the queue is not empty
-    it means some one wants to get in the queue, and a broadcast message neeeds to be triggered
+    it means some one wants to get in the queue, and a broadcast message needs to be triggered
     messageQueue : NOT WORKING YET. But the idea is that every connection/client, would put its message into the
     queue, and with the trigger that the queue it not empty, it would be broadcast to all the other users. Similar
     idea of the above
@@ -19,7 +19,7 @@ import java.util.*;
 
 public class Room {
     private final String name;
-    private final List<Connection> usersLogged = Collections.synchronizedList(new ArrayList<>());
+    private final LockedList<Connection> usersLogged = new LockedList<>();
     private final LockedQueue<Connection> waitingQueue = new LockedQueue<>();
     private final LockedQueue<String> messageQueue = new LockedQueue<>();
 
@@ -49,13 +49,11 @@ public class Room {
     }
 
     public void broadcast(String message) {
-        synchronized (usersLogged) {
-            for (Connection conn : usersLogged) {
-                try {
-                    conn.write(message);
-                } catch (IOException e) {
-                    System.out.println("Error broadcasting: " + e.getMessage());
-                }
+        for (Connection conn : usersLogged.snapshot()) {
+            try {
+                conn.write(message);
+            } catch (IOException e) {
+                System.out.println("Error broadcasting: " + e.getMessage());
             }
         }
     }

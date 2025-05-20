@@ -3,10 +3,6 @@ import java.lang.ClassNotFoundException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
 
 
 /*
@@ -24,8 +20,9 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class Room {
     private final String name;
     private final List<Connection> usersLogged = Collections.synchronizedList(new ArrayList<>());
-    private final Queue<Connection> watingQueue = new LinkedList<>();
-    private final BlockingQueue<String> messageQueue = new LinkedBlockingQueue<>();
+    private final LockedQueue<Connection> waitingQueue = new LockedQueue<>();
+    private final LockedQueue<String> messageQueue = new LockedQueue<>();
+
 
     public Room(String name) {
         this.name = name;
@@ -36,11 +33,11 @@ public class Room {
     }
 
     public void addClientToWatingQueue(Connection connection) {
-        watingQueue.add(connection);
+        waitingQueue.add(connection);
     }
 
     public Connection removeClientFromWatingQueue() {
-        return watingQueue.poll();
+        return waitingQueue.poll();
     }
 
     public void addClient(Connection connection) {
@@ -64,7 +61,8 @@ public class Room {
     }
 
     public void enqueueMessage(String message) {
-        messageQueue.offer(message);
+        messageQueue.add(message);
+
     }
 
     public String takeMessage() throws InterruptedException {

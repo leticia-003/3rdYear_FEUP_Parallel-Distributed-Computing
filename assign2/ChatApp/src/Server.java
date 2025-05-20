@@ -13,7 +13,8 @@ public class Server {
     public static int port = 4444;
     public static Database database = new Database("assign2/doc/users.txt");
 
-    private final Map<String, Room> rooms = new ConcurrentHashMap<>();
+    private final LockedMap<String, Room> rooms = new LockedMap<>();
+
 
     public Server() {
         rooms.put("General", new Room("General"));

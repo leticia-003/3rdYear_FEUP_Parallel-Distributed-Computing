@@ -138,7 +138,7 @@ public class Server {
                 // 4. After successful auth, create new session with new token
                 session = createSession(connection.getClientName(), connection);
                 tokenToSession.put(session.getToken(), session);
-                connection.write("Authentication successful. Your session token:\n" + session.getToken() + "\n");
+                connection.write("Your session token:\n" + session.getToken() + "\n");
 
                 // 5. Let user choose or create room as before
                 while (true) {
@@ -166,7 +166,22 @@ public class Server {
 
                     session.setCurrentRoom(room.getName());
                     room.addClientToWatingQueue(connection);
-                    break;
+
+                    while (true) {
+                        String input = connection.read();
+                        if (input.equalsIgnoreCase("/leave")) {
+                            room.removeClient(connection);
+                            room.broadcast("[" + connection.getClientName() + "] left the room.\n");
+                            connection.write("You left the room. Returning to lobby.\n");
+                            break; // ← Return to room selection loop
+                        } else if (input.equalsIgnoreCase("/quit")) {
+                            connection.write("Goodbye!\n");
+                            connection.close();
+                            return;
+                        } else {
+                            room.enqueueMessage("[" + connection.getClientName() + "]: " + input + "\n");
+                        }
+                    }
                 }
 
             } catch (IOException | ClassNotFoundException e) {
@@ -190,7 +205,6 @@ public class Server {
                 if (newClient != null) {
                     room.addClient(newClient);
                     room.broadcast("[" + newClient.getClientName() + "] joined the room.\n");
-                    room.startListeningFromClient(newClient);
                 }
 
                 try {

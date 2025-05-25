@@ -3,6 +3,9 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 
+/**
+ * Connection class represents a connection to a client in the chat application.
+ */
 public class Connection {
     private String clientName;
     private Socket socket;

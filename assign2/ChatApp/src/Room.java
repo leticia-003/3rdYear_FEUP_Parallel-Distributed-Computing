@@ -4,19 +4,19 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
 
-
-/*
-    A Room is made of a list of users that chat with each other.
-    The users are abstracted as the connections they are into with the server
-
-    usersLogged : The users that are in the room
-    watingQueue : The users that want to get in the room are put in this queue. So whenever the queue is not empty
-    it means some one wants to get in the queue, and a broadcast message needs to be triggered
-    messageQueue : NOT WORKING YET. But the idea is that every connection/client, would put its message into the
-    queue, and with the trigger that the queue it not empty, it would be broadcast to all the other users. Similar
-    idea of the above
+/**
+ * Represents a chat room that manages connected clients and message broadcasting.
+ *
+ * Each room maintains a list of active users, a waiting queue for newly joined users,
+ * and a message queue for broadcasting messages. Clients are added to the waiting queue
+ * before being admitted to the room and start sending/receiving messages.
+ *
+ * Typical responsibilities:
+ *     - Add/remove users
+ *     - Broadcast messages to all users
+ *     - Queue and relay messages
+ *     - Handle client disconnection gracefully
  */
-
 public class Room {
     private final String name;
     private final LockedList<Connection> usersLogged = new LockedList<>();
@@ -64,7 +64,7 @@ public class Room {
     }
 
     public String takeMessage() throws InterruptedException {
-        return messageQueue.take(); // blocks until message is available
+        return messageQueue.take();
     }
 
     public void startListeningFromClient(Connection client) {

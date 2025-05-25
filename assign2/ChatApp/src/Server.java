@@ -5,10 +5,16 @@ import java.net.Socket;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+
 /**
- * This class implements java Socket server
+ * Server class that handles socket-based multi-room chat functionality.
  *
+ * <p>This server allows users to register or log in, join chat rooms, and interact
+ * with others in real time. It supports token-based session management to allow
+ * fault tolerance — users can reconnect and resume their sessions after disconnections.
+
  */
+
 public class Server {
     public static ServerSocket server;
     public static int port = 4444;

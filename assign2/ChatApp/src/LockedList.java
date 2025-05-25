@@ -2,6 +2,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
+/**
+ * A thread-safe list wrapper using ReentrantLock for manual synchronization.
+ * 
+ * This class provides basic list operations (add, remove, contains, size) and a 
+ * safe way to obtain a consistent snapshot of the current list.
+ */
 public class LockedList<T> {
     private final List<T> list = new ArrayList<>();
     private final ReentrantLock lock = new ReentrantLock();
@@ -27,7 +33,7 @@ public class LockedList<T> {
     public List<T> snapshot() {
         lock.lock();
         try {
-            return new ArrayList<>(list); // return a safe copy
+            return new ArrayList<>(list);
         } finally {
             lock.unlock();
         }

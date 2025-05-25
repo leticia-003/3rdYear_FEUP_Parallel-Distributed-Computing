@@ -27,10 +27,10 @@ public class Database {
                 String line = scanner.nextLine();
                 String[] parts = line.split(":");
                 if (parts.length == 2 && parts[0].equals(username)) {
-                    return parts; // parts[0] = username, parts[1] = password
+                    return parts;
                 }
             }
         }
-        return null; // User not found
+        return null;
     }
 }

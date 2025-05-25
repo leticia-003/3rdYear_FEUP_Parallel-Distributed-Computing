@@ -1,4 +1,6 @@
+import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
@@ -37,6 +39,15 @@ public class LockedQueue<T> {
         lock.lock();
         try {
             return queue.poll(); // returns null if empty
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public List<T> snapshot() {
+        lock.lock();
+        try {
+            return new ArrayList<>(queue); // make a copy under lock
         } finally {
             lock.unlock();
         }

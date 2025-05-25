@@ -11,6 +11,38 @@ If using IntelliJ, to start the Server you need to go to ChatApp/src folder and 
 Use TestLeticia.java, TestVictor.java, or TestBia.java to simulate one or multiple clients.
 <img src="screenshots/screenshot3.png">
 
+## Install Ollama
+
+Make sure you have Ollama installed in your local machine
+
+### Windows
+
+[Download link](https://ollama.com/download/windows)
+
+### MacOS
+
+[Download link](https://ollama.com/download/mac)
+
+### Linux
+
+Run the following command on your terminal:
+
+`curl -fsSL https://ollama.com/install.sh | sh`
+
+### Setting up Ollama
+
+After installation run the following command and ensure that Ollama is running on **port 11434**:
+
+`ollama serve`
+
+In case ollama isn't running on port 11434, change the port in file `OllamaClient.java`
+
+`this.endpoint = "http://localhost:11434/api/generate";` - line 15
+
+Before running the app make sure you pull the used model by running the following command:
+
+`ollama pull llama3`
+
 ## Using the App
 On first run: \
 **Choose 2** - Register \

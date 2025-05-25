@@ -2,7 +2,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class AIRoom extends Room {
-    private String systemPrompt = null; // Prompt starts as null
+    private String systemPrompt = null;
     private final OllamaClient ollamaClient;
     private final List<String> conversationHistory = new ArrayList<>();
 
@@ -19,52 +19,6 @@ public class AIRoom extends Room {
         return systemPrompt;
     }
 
-    public OllamaClient getOllamaClient() {
-        return ollamaClient;
-    }
-
-//    @Override
-//    public void startListeningFromClient(Connection client) {
-//        Thread reader = new Thread(() -> {
-//            try {
-//                // Only ask for prompt if it hasn't been set yet
-//                if (systemPrompt == null) {
-//                    client.write("Enter AI prompt for room \"" + getName() + "\":\n");
-//                    String prompt = client.read();
-//                    setSystemPrompt(prompt);
-//                    client.write("Prompt set. You can start messaging.\n");
-//                }
-//                else{
-//                    client.write("Room prompt is already set.\n");
-//                    client.write("Room prompt: " + systemPrompt + "\n");
-//                    client.write("You can start messaging.\n");
-//                }
-//
-//                // Normal chat loop
-//                while (true) {
-//                    String userMsg = client.read();
-//                    if (userMsg == null || userMsg.trim().isEmpty()) continue;
-//
-//                    String userFormatted = "[" + client.getClientName() + "]: " + userMsg;
-//                    enqueueMessage(userFormatted + "\n");
-//                    if (conversationHistory.size() < 5){
-//                        conversationHistory.add(userMsg);
-//                    }
-//                    else {
-//                        conversationHistory.removeFirst();
-//                        conversationHistory.add(userMsg);
-//                    }
-//                    String botReply = buildPrompt(userMsg);
-//                    enqueueMessage("[Bot]: " + botReply + "\n");
-//                }
-//            } catch (Exception e) {
-//                removeClient(client);
-//                enqueueMessage("[" + client.getClientName() + "] left the room.\n");
-//            }
-//        });
-//
-//        reader.start();
-//    }
 
     public void appendToHistory(String msg) {
         if (conversationHistory.size() < 5) {

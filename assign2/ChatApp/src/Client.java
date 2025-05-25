@@ -10,7 +10,6 @@ public class Client {
     private Connection connection;
 
     // Constructors of the Client
-    public Client() {}
     public Client(String name){
         this.name = name;
     }

@@ -5,7 +5,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class TestBia {
 
-    // Change this per client instance
     private static final String USERNAME = "bia";
 
     private static final String TOKEN_FILE = System.getProperty("user.home") + File.separator + ".chat_token_" + USERNAME;
@@ -35,12 +34,12 @@ public class TestBia {
         Client c = new Client(USERNAME);
         c.connect(host, 4444);
 
-        // 1. Load token and send immediately after connect
+        // 1. Load token
         AtomicReference<String> token = new AtomicReference<>(loadToken());
-        if (token.get().isEmpty()) token.set(""); // Just in case
+        if (token.get().isEmpty()) token.set("");
         c.write(token.get());
 
-        // 2. Start reader thread that prints server messages and saves token when received
+        // 2. Start reader thread
         Thread reader = Thread.startVirtualThread(() -> {
             try {
                 while (true) {
@@ -48,7 +47,6 @@ public class TestBia {
                     System.out.print(srv);
                     System.out.flush();
 
-                    // 3. Check if server sends a new session token
                     if (srv.startsWith("Your session token: ")) {
                         token.set(srv.substring("Your session token: ".length()).trim());
                         if (!token.get().isEmpty()) {
@@ -62,7 +60,7 @@ public class TestBia {
             }
         });
 
-        // 4. Main thread loop to read from stdin and send to server
+        // 3. Main thread
         while (true) {
             String line = stdin.nextLine();
             c.write(line);

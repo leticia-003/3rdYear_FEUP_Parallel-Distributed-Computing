@@ -23,10 +23,6 @@ public class Session {
         return token;
     }
 
-    public Connection getConnection() {
-        return connection;
-    }
-
     public void setConnection(Connection connection) {
         this.connection = connection;
     }

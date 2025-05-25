@@ -30,14 +30,6 @@ public class LockedMap<K, V> {
         }
     }
 
-    public boolean containsKey(K key) {
-        lock.lock();
-        try {
-            return map.containsKey(key);
-        } finally {
-            lock.unlock();
-        }
-    }
 
     public Iterable<K> keySet() {
         lock.lock();

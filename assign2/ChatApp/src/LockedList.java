@@ -39,15 +39,6 @@ public class LockedList<T> {
         }
     }
 
-    public boolean contains(T item) {
-        lock.lock();
-        try {
-            return list.contains(item);
-        } finally {
-            lock.unlock();
-        }
-    }
-
     public int size() {
         lock.lock();
         try {

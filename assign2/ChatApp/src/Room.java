@@ -32,16 +32,22 @@ public class Room {
         return name;
     }
 
-    public void addClientToWatingQueue(Connection connection) {
-        waitingQueue.add(connection);
-    }
 
-    public Connection removeClientFromWatingQueue() {
+
+    public Connection removeClientFromWaitingQueue() {
         return waitingQueue.poll();
     }
 
+    public void addClientToWaitingQueue(Connection connection) {
+        if (!waitingQueue.snapshot().contains(connection) && !usersLogged.snapshot().contains(connection)) {
+            waitingQueue.add(connection);
+        }
+    }
+
     public void addClient(Connection connection) {
-        usersLogged.add(connection);
+        if (!usersLogged.snapshot().contains(connection)) {
+            usersLogged.add(connection);
+        }
     }
 
     public void removeClient(Connection connection) {
@@ -67,20 +73,20 @@ public class Room {
         return messageQueue.take();
     }
 
-    public void startListeningFromClient(Connection client) {
-        Thread reader = new Thread(() -> {
-            try {
-                while (true) {
-                    String msg = client.read();
-                    enqueueMessage("[" + client.getClientName() + "]: " + msg + "\n");
-                }
-            } catch (Exception e) {
-                removeClient(client);
-                broadcast("[" + client.getClientName() + "] left the room.\n");
-            }
-        });
-
-        reader.start();
-    }
+//    public void startListeningFromClient(Connection client) {
+//        Thread reader = new Thread(() -> {
+//            try {
+//                while (true) {
+//                    String msg = client.read();
+//                    enqueueMessage("[" + client.getClientName() + "]: " + msg + "\n");
+//                }
+//            } catch (Exception e) {
+//                removeClient(client);
+//                broadcast("[" + client.getClientName() + "] left the room.\n");
+//            }
+//        });
+//
+//        reader.start();
+//    }
 
 }

@@ -1,7 +1,6 @@
 import java.io.*;
 import java.net.InetAddress;
 import java.util.Scanner;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class TestVictor {
 
@@ -35,12 +34,11 @@ public class TestVictor {
         c.connect(host, 4444);
 
         // 1. Load token
-        AtomicReference<String> token = new AtomicReference<>(loadToken());
-        if (token.get().isEmpty()) token.set(""); // Just in case
-        c.write(token.get());
+        String token = loadToken();
+        c.write(token.isEmpty() ? "" : token);
 
         // 2. Start reader thread
-        Thread reader = Thread.startVirtualThread(() -> {
+        Thread.startVirtualThread(() -> {
             try {
                 while (true) {
                     String srv = c.read();
@@ -48,9 +46,9 @@ public class TestVictor {
                     System.out.flush();
 
                     if (srv.startsWith("Your session token: ")) {
-                        token.set(srv.substring("Your session token: ".length()).trim());
-                        if (!token.get().isEmpty()) {
-                            saveToken(token.get());
+                        String newToken = srv.substring("Your session token: ".length()).trim();
+                        if (!newToken.isEmpty()) {
+                            saveToken(newToken);
                             System.out.println("[Token saved]");
                         }
                     }

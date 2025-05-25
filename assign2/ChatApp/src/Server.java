@@ -1,9 +1,7 @@
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Server class that handles socket-based multi-room chat functionality.
@@ -20,7 +18,7 @@ public class Server {
     public static Database database = new Database("assign2/doc/users.txt");
 
     private final LockedMap<String, Room> rooms = new LockedMap<>();
-    private final Map<String, Session> tokenToSession = new ConcurrentHashMap<>();
+    private final LockedMap<String, Session> tokenToSession = new LockedMap<>();
 
     public Server() {
         rooms.put("General", new Room("General"));

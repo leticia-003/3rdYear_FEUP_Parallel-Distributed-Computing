@@ -139,7 +139,7 @@ public class Server {
                         sb.append("• ").append(r).append('\n');
                     }
                     sb.append("(prefix with \"AI:\" for an AI room)\n");
-                    sb.append("type \\quit to exit chat app and \\leave to leave chat room.\n");
+                    sb.append("type /quit to exit chat app and /leave to leave chat room.\n");
                     connection.write(sb.toString());
 
                     String selected = connection.read().trim();

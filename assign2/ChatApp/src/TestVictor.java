@@ -1,37 +1,71 @@
-import java.io.IOException;
+import java.io.*;
 import java.net.InetAddress;
 import java.util.Scanner;
+import java.util.concurrent.atomic.AtomicReference;
 
-
-/*
-    I created this Main Class just for the matter of testing the Client - Server relationship
- */
 public class TestVictor {
-    public static void main(String[] args) throws Exception {
-        /* ---------- SET‑UP ---------- */
-        Scanner  stdin = new Scanner(System.in);
-        String   host  = InetAddress.getLocalHost().getHostName();
 
-        Client c = new Client("Victor");
+    // Change this per client instance
+    private static final String USERNAME = "victor";
+
+    private static final String TOKEN_FILE = System.getProperty("user.home") + File.separator + ".chat_token_" + USERNAME;
+
+    private static String loadToken() {
+        File f = new File(TOKEN_FILE);
+        if (!f.exists()) return "";
+        try (BufferedReader br = new BufferedReader(new FileReader(f))) {
+            return br.readLine().trim();
+        } catch (IOException e) {
+            return "";
+        }
+    }
+
+    private static void saveToken(String token) {
+        try (PrintWriter pw = new PrintWriter(new FileWriter(TOKEN_FILE))) {
+            pw.println(token);
+        } catch (IOException e) {
+            System.err.println("Failed to save token: " + e.getMessage());
+        }
+    }
+
+    public static void main(String[] args) throws Exception {
+        Scanner stdin = new Scanner(System.in);
+        String host = InetAddress.getLocalHost().getHostName();
+
+        Client c = new Client(USERNAME);
         c.connect(host, 4444);
 
-        /* ---------- READER thread ---------- */
+        // 1. Load token and send immediately after connect
+        AtomicReference<String> token = new AtomicReference<>(loadToken());
+        if (token.get().isEmpty()) token.set(""); // Just in case
+        c.write(token.get());
+
+        // 2. Start reader thread that prints server messages and saves token when received
         Thread reader = Thread.startVirtualThread(() -> {
             try {
                 while (true) {
-                    String srv = c.read();          // blocks
-                    System.out.print(srv);          // show every line from server
+                    String srv = c.read();
+                    System.out.print(srv);
                     System.out.flush();
+
+                    // 3. Check if server sends a new session token
+                    if (srv.startsWith("Your session token: ")) {
+                        token.set(srv.substring("Your session token: ".length()).trim());
+                        if (!token.get().isEmpty()) {
+                            saveToken(token.get());
+                            System.out.println("[Token saved]");
+                        }
+                    }
                 }
             } catch (Exception e) {
                 System.out.println("connection closed: " + e);
             }
         });
 
-        /* ---------- WRITER loop (main thread) ---------- */
+        // 4. Main thread loop to read from stdin and send to server
         while (true) {
-            String line = stdin.nextLine();   // wait for keyboard
-            c.write(line);                    // send to server
+            String line = stdin.nextLine();
+            c.write(line);
             if ("/quit".equalsIgnoreCase(line.trim())) {
                 c.close();
                 break;
@@ -39,5 +73,3 @@ public class TestVictor {
         }
     }
 }
-
-

@@ -32,16 +32,22 @@ public class Room {
         return name;
     }
 
-    public void addClientToWatingQueue(Connection connection) {
-        waitingQueue.add(connection);
-    }
 
-    public Connection removeClientFromWatingQueue() {
+
+    public Connection removeClientFromWaitingQueue() {
         return waitingQueue.poll();
     }
 
+    public void addClientToWaitingQueue(Connection connection) {
+        if (!waitingQueue.snapshot().contains(connection) && !usersLogged.snapshot().contains(connection)) {
+            waitingQueue.add(connection);
+        }
+    }
+
     public void addClient(Connection connection) {
-        usersLogged.add(connection);
+        if (!usersLogged.snapshot().contains(connection)) {
+            usersLogged.add(connection);
+        }
     }
 
     public void removeClient(Connection connection) {

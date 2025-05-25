@@ -1,6 +1,10 @@
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Extension of Room that deals specifically with the AI pipeline
+ */
+
 public class AIRoom extends Room {
     private String systemPrompt = null;
     private final OllamaClient ollamaClient;

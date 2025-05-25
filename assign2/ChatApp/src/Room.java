@@ -73,20 +73,20 @@ public class Room {
         return messageQueue.take(); // blocks until message is available
     }
 
-    public void startListeningFromClient(Connection client) {
-        Thread reader = new Thread(() -> {
-            try {
-                while (true) {
-                    String msg = client.read();
-                    enqueueMessage("[" + client.getClientName() + "]: " + msg + "\n");
-                }
-            } catch (Exception e) {
-                removeClient(client);
-                broadcast("[" + client.getClientName() + "] left the room.\n");
-            }
-        });
-
-        reader.start();
-    }
+//    public void startListeningFromClient(Connection client) {
+//        Thread reader = new Thread(() -> {
+//            try {
+//                while (true) {
+//                    String msg = client.read();
+//                    enqueueMessage("[" + client.getClientName() + "]: " + msg + "\n");
+//                }
+//            } catch (Exception e) {
+//                removeClient(client);
+//                broadcast("[" + client.getClientName() + "] left the room.\n");
+//            }
+//        });
+//
+//        reader.start();
+//    }
 
 }

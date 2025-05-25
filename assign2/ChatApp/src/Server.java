@@ -62,12 +62,13 @@ public class Server {
 
     private void handleAuthentication(Socket clientSocket) {
         Thread.startVirtualThread(() -> {
+            Connection connection = null;
+            Session session = null;
             try {
-                Connection connection = new Connection(clientSocket);
+                connection = new Connection(clientSocket);
                 Room room = null;
 
                 String token = connection.read().trim();
-                Session session = null;
 
                 if (!token.isEmpty()) {
                     session = tokenToSession.get(token);
@@ -90,7 +91,6 @@ public class Server {
                     }
                 }
 
-                // If session was invalid or new connection
                 if (session == null) {
                     connection.write("Please login or register\n");
                     boolean authenticated = false;
@@ -124,14 +124,13 @@ public class Server {
                     connection.write("Your session token: " + session.getToken() + "\n");
                 }
 
-                // Main room selection loop
                 while (true) {
-                    // Prompt for room
                     StringBuilder sb = new StringBuilder("Choose a room (new name ⇒ creates it)\n");
                     for (String r : rooms.keySet()) {
                         sb.append("• ").append(r).append('\n');
                     }
                     sb.append("(prefix with \"AI:\" for an AI room)\n");
+                    sb.append("type \\quit to exit chat app and \\leave to leave chat room.\n");
                     connection.write(sb.toString());
 
                     String selected = connection.read().trim();
@@ -140,8 +139,7 @@ public class Server {
                     Room selectedRoom = rooms.get(selected);
                     if (selectedRoom == null) {
                         if (selected.toUpperCase().startsWith("AI:")) {
-                            String roomName = selected.substring(3).trim();
-                            selectedRoom = new AIRoom(roomName, new OllamaClient("llama3"));
+                            selectedRoom = new AIRoom(selected, new OllamaClient("llama3"));
                         } else if (selected.equalsIgnoreCase("/leave") || selected.equalsIgnoreCase("/quit")) {
                             connection.write("Invalid room name.\n");
                             continue;
@@ -154,20 +152,46 @@ public class Server {
 
                     session.setCurrentRoom(selectedRoom.getName());
                     selectedRoom.addClientToWaitingQueue(connection);
-
-                    // Enter chat loop
                     handleChatLoop(connection, selectedRoom, session);
                 }
 
             } catch (IOException | ClassNotFoundException e) {
                 System.out.println("Client connection error: " + e.getMessage());
+            } finally {
+                if (session != null && session.getCurrentRoom() != null) {
+                    Room currentRoom = rooms.get(session.getCurrentRoom());
+                    if (currentRoom != null) {
+                        currentRoom.removeClient(connection);
+                        currentRoom.broadcast("[" + connection.getClientName() + "] left the room.\n");
+                    }
+                }
+                try {
+                    if (connection != null) connection.close();
+                } catch (IOException e) {
+                    System.out.println("Error closing connection: " + e.getMessage());
+                }
             }
         });
     }
 
     private void handleChatLoop(Connection connection, Room room, Session session) throws IOException, ClassNotFoundException {
+        AIRoom aiRoom = (room instanceof AIRoom) ? (AIRoom) room : null;
+
+        // Prompt handling for AIRoom
+        if (aiRoom != null && aiRoom.getSystemPrompt() == null) {
+            connection.write("Enter AI prompt for room \"" + aiRoom.getName() + "\":\n");
+            String prompt = connection.read();
+            aiRoom.setSystemPrompt(prompt);
+            connection.write("Prompt set. You can start messaging.\n");
+        } else if (aiRoom != null) {
+            connection.write("Room prompt: " + aiRoom.getSystemPrompt() + "\n");
+            connection.write("You can start messaging.\n");
+        }
+
         while (true) {
             String input = connection.read();
+
+            if (input == null || input.trim().isEmpty()) continue;
 
             if (input.equalsIgnoreCase("/leave")) {
                 room.removeClient(connection);
@@ -180,7 +204,14 @@ public class Server {
                 connection.close();
                 return;
             } else {
-                room.enqueueMessage("[" + connection.getClientName() + "]: " + input + "\n");
+                String userMessage = "[" + connection.getClientName() + "]: " + input + "\n";
+                room.enqueueMessage(userMessage);
+
+                if (aiRoom != null) {
+                    aiRoom.appendToHistory(input);
+                    String botReply = aiRoom.buildPrompt();
+                    room.enqueueMessage("[Bot]: " + botReply + "\n");
+                }
             }
         }
     }

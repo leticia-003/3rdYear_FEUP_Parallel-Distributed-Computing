@@ -5,28 +5,30 @@ import java.util.Queue;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
+/**
+ * A thread-safe queue using locks and condition variables.
+ * This class allows safe access to a queue by multiple threads.
+ */
 public class LockedQueue<T> {
     private final Queue<T> queue = new LinkedList<>();
     private final ReentrantLock lock = new ReentrantLock();
     private final Condition notEmpty = lock.newCondition();
 
-    // Add item to queue
     public void add(T item) {
         lock.lock();
         try {
             queue.add(item);
-            notEmpty.signal(); // wake up one waiting thread
+            notEmpty.signal();
         } finally {
             lock.unlock();
         }
     }
 
-    // Take item from queue, wait if empty
     public T take() throws InterruptedException {
         lock.lock();
         try {
             while (queue.isEmpty()) {
-                notEmpty.await(); // block until not empty
+                notEmpty.await();
             }
             return queue.remove();
         } finally {
@@ -34,11 +36,10 @@ public class LockedQueue<T> {
         }
     }
 
-    // Optional: non-blocking poll
     public T poll() {
         lock.lock();
         try {
-            return queue.poll(); // returns null if empty
+            return queue.poll();
         } finally {
             lock.unlock();
         }
